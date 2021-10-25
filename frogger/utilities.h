@@ -19,7 +19,7 @@
 // tempo maximo de jogo para pontuar
 #define TEMPO_MAXIMO 80
 
-// tempo em segundos para o jogo comecar
+// tempo em milissegundos para o jogo comecar
 #define TEMPO_COMECA_JOGO 500
 
 // tamanho do desenho do fogo quando acontece uma colisão
@@ -55,6 +55,18 @@
 
 // tamanho máximo do nome do jogador
 #define TAM 20
+
+
+typedef enum
+{
+    MSG_COLIDIU = 0,
+    MSG_ATRAVESSOU_RUA = 1,
+    MSG_FIM_VIDAS = 2,
+    MSG_FIM_TEMPO = 3,
+    MSG_PAUSE = 4,
+    MSG_SEM_ARQUIVO = 5,
+    MSG_LER_ARQUIVO = 6
+} MENSAGEM;
 
 typedef enum
 {
@@ -136,7 +148,7 @@ typedef struct
 typedef struct
 {
     JOGADOR jogador;
-    SAPO sapos[NUM_SAPOS];
+    SAPO lista_sapos[NUM_SAPOS];
     VEICULO lista_veiculos1[NUM_VEICULOS];
     VEICULO lista_veiculos2[NUM_VEICULOS];
     int fase_atual;

@@ -10,7 +10,7 @@ void hidecursor();
 void desenha_moldura();
 void inicia_jogo();
 
-void mostra_mensagem(int ganhou);
+void mostra_mensagem(int mensagem);
 void inicializa_sapos(SAPO *lista_sapos);
 void plota_sapo(COORDENADA coordenada, COLORS cor);
 int move_sapo(SAPO *lista_sapos, int tecla, int *indice_sapo);
@@ -31,8 +31,8 @@ void testa_carro_unitario(VEICULO *lista_veiculos, int posicao);
 void desenha_veiculo(VEICULO veiculo, COLORS cor);
 void desenha_lista_veiculos(VEICULO *lista_veiculos);
 void apaga_carros(VEICULO *lista_veiculos);
-void pausa_jogo(JOGADOR jogador, SAPO sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual);
-void instancia_jogo(ESTADO estado, JOGADOR *jogador, SAPO *sapos, VEICULO *lista_veiculos1, VEICULO *lista_veiculos2, int *indice_sapo, int *fase_atual);
+void pausa_jogo(JOGADOR jogador, SAPO lista_sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual, FILE *arq);
+void instancia_jogo(ESTADO estado, JOGADOR *jogador, SAPO *lista_sapos, VEICULO *lista_veiculos1, VEICULO *lista_veiculos2, int *indice_sapo, int *fase_atual);
 void escreve_header();
 
 // funcao principal
@@ -83,23 +83,20 @@ void inicia_jogo()
     int chegou_no_topo;
     char tecla;
 
-    int pista1_y = Y_PISTA1;
-    int pista2_y = Y_PISTA2;
-
     VEICULO lista_veiculos1[NUM_VEICULOS];
-    DIRECAO_MOVIMENTO pista1_direcao = DIR;
-
     VEICULO lista_veiculos2[NUM_VEICULOS];
-    DIRECAO_MOVIMENTO pista2_direcao = DIR;
 
     JOGADOR jogador;
 
     SAPO lista_sapos[NUM_SAPOS];
     COORDENADA coordenada;
 
+    ESTADO estado;
+    FILE *arq = NULL;
+
     // inicializa valores
-    inicializa_carros(lista_veiculos1, pista1_direcao, pista1_y);
-    inicializa_carros(lista_veiculos2, pista2_direcao, pista2_y);
+    inicializa_carros(lista_veiculos1, DIR, Y_PISTA1);
+    inicializa_carros(lista_veiculos2, DIR, Y_PISTA2);
     inicializa_sapos(lista_sapos);
     inicializa_jogador(&jogador);
 
@@ -131,8 +128,8 @@ void inicia_jogo()
         if(colide == 1)
         {
             // reposiciona veiculos
-            inicializa_carros(lista_veiculos1, pista1_direcao, pista1_y);
-            inicializa_carros(lista_veiculos2, pista2_direcao, pista2_y);
+            inicializa_carros(lista_veiculos1, DIR, Y_PISTA1);
+            inicializa_carros(lista_veiculos2, DIR, Y_PISTA2);
             // desenha um sapo inativo a menos
             redesenha_inativos(indice_sapo, WHITE);
 
@@ -169,12 +166,12 @@ void inicia_jogo()
                     // se chegou no topo e não acabaram os sapos da lista, redesenha os sapos inativos e reposiciona os veiculos
                     if(chegou_no_topo == 1)
                     {
-                        mostra_mensagem(1);
+                        mostra_mensagem(MSG_ATRAVESSOU_RUA);
                         // desenha o sapo no inicio da tela
                         plota_sapo(lista_sapos[indice_sapo].envelope[0], lista_sapos[indice_sapo].cor);
                         // reposiciona veiculos
-                        inicializa_carros(lista_veiculos1, pista1_direcao, pista1_y);
-                        inicializa_carros(lista_veiculos2, pista2_direcao, pista2_y);
+                        inicializa_carros(lista_veiculos1, DIR, Y_PISTA1);
+                        inicializa_carros(lista_veiculos2, DIR, Y_PISTA2);
                         // desenha um sapo inativo a menos
                         redesenha_inativos(indice_sapo, WHITE);
 
@@ -189,16 +186,24 @@ void inicia_jogo()
             // se foi pressionada a tecla P maiuscula ou minuscula, pausa o jogo
             }else if(tecla == T_PMAX || tecla == T_PMIN)
             {
-                pausa_jogo(jogador, lista_sapos, lista_veiculos1, lista_veiculos2, fase_atual);
-
+                // salva todos as variaveis do jogo
+                pausa_jogo(jogador, lista_sapos, lista_veiculos1, lista_veiculos2, fase_atual, arq);
+                // mostra mensagem de pause
+                mostra_mensagem(MSG_PAUSE);
+                // recalcula o tempo do jogo
+                jogador.inicioJogo = time(NULL) - jogador.tempoJogo;
             // se foi pressionada a tecla C maiuscula ou minuscula, carrega o jogo
             }else if(tecla == T_CMAX || tecla == T_CMIN)
             {
-                // carrega todos os valores do arquivo binario na estrutura ESTADO
-                //
-                //
-                // instancia cada valor de ESTADO nas variaveis do jogo
-                // instancia_jogo(estado, &jogador, lista_sapos, lista_veiculos1, lista_veiculos2, &indice_sapo, &fase_atual);
+                // carrega todos os valores do arquivo binario na estrutura ESTADO se encontrou o arquivo
+                if(le_jogo_salvo(&estado, jogador.nome, arq))
+                {
+                    // instancia cada valor de ESTADO nas variaveis do jogo
+                    instancia_jogo(estado, &jogador, lista_sapos, lista_veiculos1, lista_veiculos2, &indice_sapo, &fase_atual);
+                }else
+                {
+                    mostra_mensagem(MSG_SEM_ARQUIVO);
+                }
             }
         }
     }
@@ -589,7 +594,7 @@ int move_sapo(SAPO *lista_sapo, int tecla, int *indice_sapo)
         // se for o ultimo encerra o jogo
         if(ultimo_sapo)
         {
-            mostra_mensagem(2);
+            mostra_mensagem(MSG_FIM_VIDAS);
             chegou_no_topo = 2;
         }
     }
@@ -698,13 +703,13 @@ int mata_sapo(SAPO *lista_sapos, VEICULO lista_veiculos[], int *indice_sapo)
         if(*indice_sapo+1 == NUM_SAPOS)
         {
             // mostra mensagem de sapo morto
-            mostra_mensagem(2);
+            mostra_mensagem(MSG_FIM_VIDAS);
             return 2;
         }
         else
         {
             // mostra mensagem de sapo morto
-            mostra_mensagem(0);
+            mostra_mensagem(MSG_COLIDIU);
 
             // apaga o fogo
             apaga_fogo(lista_sapos[*indice_sapo].envelope[0]);
@@ -845,37 +850,49 @@ void desenha_sapos_inativos(int indice_sapo, COLORS cor)
     }
 }
 
-// mostra as mensagens de acordo com o resultado do sapo
-void mostra_mensagem(int ganhou)
+// mostra as mensagens de acordo com o resultado do jogo
+void mostra_mensagem(int mensagem)
 {
     char tecla;
 
-    if(ganhou == 0)
+    switch(mensagem)
     {
-        gotoxy(XINI, YMENSAGEM);
-        textcolor(RED);
-        printf("VOCE MATOU O SAPO!! APERTE ESPACO PARA CONTINUAR!");
+        case MSG_COLIDIU:
+            gotoxy(XINI, YMENSAGEM);
+            textcolor(RED);
+            printf("VOCE MATOU O SAPO!! APERTE ESPACO PARA CONTINUAR!");
+            break;
+        case MSG_ATRAVESSOU_RUA:
+            gotoxy(XINI, YMENSAGEM);
+            textcolor(YELLOW);
+            printf("PARABENS VOCE CHEGOU DO OUTRO LADO DA RUA E SALVOU O SAPO!!! APERTE ESPACO PARA CONTINUAR!");
+            break;
+        case MSG_FIM_VIDAS:
+            gotoxy(XINI, YFIM+2);
+            textcolor(YELLOW);
+            printf("FIM DE JOGO!! VOCE NAO POSSUI MAIS SAPOS. APERTE ESPACO PARA CONTINUAR!");
+            break;
+        case MSG_FIM_TEMPO:
+            gotoxy(XINI, YMENSAGEM);
+            textcolor(RED);
+            printf("FIM DE JOGO!! O TEMPO ACABOU. APERTE ESPACO PARA CONTINUAR!");
+            break;
+        case MSG_PAUSE:
+            gotoxy(XINI, YMENSAGEM);
+            textcolor(YELLOW);
+            printf("JOGO PAUSADO. APERTE ESPACO PARA CONTINUAR!");
+            break;
+        case MSG_SEM_ARQUIVO:
+            gotoxy(XINI, YMENSAGEM);
+            textcolor(RED);
+            printf("NAO FOI POSSIVEL CARREGAR O JOGO. APERTE ESPACO PARA CONTINUAR!");
+            break;
+        case MSG_LER_ARQUIVO:
+            gotoxy(XINI, YMENSAGEM);
+            textcolor(YELLOW);
+            printf("JOGO CARREGADO COM SUCESSO! APERTE ESPACO PARA CONTINUAR!");
+            break;
     }
-    else if (ganhou == 1)
-    {
-        gotoxy(XINI, YMENSAGEM);
-        textcolor(YELLOW);
-        printf("PARABENS VOCE CHEGOU DO OUTRO LADO DA RUA E SALVOU O SAPO!!! APERTE ESPACO PARA CONTINUAR!");
-    }
-    else if(ganhou == 2)
-    {
-        int y = YFIM+2;
-        gotoxy(XINI, y);
-        textcolor(YELLOW);
-        printf("FIM DE JOGO!! VOCE NAO POSSUI MAIS SAPOS. APERTE ESPACO PARA CONTINUAR!");
-    }
-    else
-    {
-        gotoxy(XINI, YMENSAGEM);
-        textcolor(RED);
-        printf("FIM DE JOGO!! O TEMPO ACABOU. APERTE ESPACO PARA CONTINUAR!");
-    }
-
     do
     {
         tecla = getch();
@@ -889,17 +906,17 @@ void mostra_mensagem(int ganhou)
 // inicializa os dados do jogador
 void inicializa_jogador(JOGADOR *jogador)
 {
+    textcolor(WHITE);
+    printf("Digite o seu nome:\n");
+    gets(jogador->nome);
+
     jogador->sapos_salvos = 0;
     // pega horario atual do clock
     jogador->inicioJogo = time(NULL);
     jogador->tempoJogo = 0;
     jogador->score = 0;
 
-    textcolor(WHITE);
-    printf("Digite o seu nome:\n");
-    gets(jogador->nome);
-
-    // depois de o jogador inserir o nome, espera 1 segundo para o jogo comecar
+    // depois de o jogador inserir o nome, espera meio segundo para o jogo comecar
     Sleep(TEMPO_COMECA_JOGO);
 }
 
@@ -944,41 +961,94 @@ void encerra_jogo(JOGADOR jogador)
            "Pontuacao final: %d pontos\n\n", jogador.nome, jogador.sapos_salvos, jogador.tempoJogo, jogador.score);
 }
 
-void pausa_jogo(JOGADOR jogador, SAPO sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual)
+void pausa_jogo(JOGADOR jogador, SAPO lista_sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual, FILE *arq)
 {
     ESTADO estado;
     int i;
 
+    // subtrai o tempo do inicio do jogo do tempo atual
+    jogador.tempoJogo = (int) difftime(time(NULL), jogador.inicioJogo);
     estado.jogador = jogador;
     estado.fase_atual = fase_atual;
 
     for(i = 0; i< NUM_SAPOS; i++){
-        estado.sapos[i] = sapos[i];
+        estado.lista_sapos[i] = lista_sapos[i];
     }
 
     for(i = 0; i< NUM_VEICULOS; i++){
         estado.lista_veiculos1[i] = lista_veiculos1[i];
         estado.lista_veiculos2[i] = lista_veiculos2[i];
     }
-    salva_estado_jogo(estado);
+
+    salva_estado_jogo(estado, arq);
 }
 
-void instancia_jogo(ESTADO estado, JOGADOR *jogador, SAPO *sapos, VEICULO *lista_veiculos1, VEICULO *lista_veiculos2, int *indice_sapo, int *fase_atual)
+void instancia_jogo(ESTADO estado, JOGADOR *jogador, SAPO *lista_sapos, VEICULO *lista_veiculos1, VEICULO *lista_veiculos2, int *indice_sapo, int *fase_atual)
 {
     int i;
+    COORDENADA coordenada;
+    // mostra mensagem que leu o arquivo com sucesso
+    mostra_mensagem(MSG_LER_ARQUIVO);
 
-    *jogador = estado.jogador;
-    *fase_atual = estado.fase_atual;
+    // apaga o sapo e carros antigos da tela
+    plota_sapo(lista_sapos[*indice_sapo].envelope[0], BLACK);
+    apaga_carros(lista_veiculos1);
+    apaga_carros(lista_veiculos2);
 
-    for(i = 0; i< NUM_SAPOS; i++){
-        if(estado.sapos[i].status == ATIVO){
-            *indice_sapo = i;
-        }
-        sapos[i] = estado.sapos[i];
+    // apaga todos sapos inativos
+    desenha_sapos_inativos(0, BLACK);
+
+    for(i = 0; i< jogador->sapos_salvos; i++)
+    {
+        // apaga todos os sapos salvos
+        coordenada.x = XFIM+2;
+        coordenada.y = YINI+2 + i * 3;
+        plota_sapo(coordenada, BLACK);
     }
 
+    *jogador = estado.jogador;
+    // recalcula o tempo do jogo
+    jogador->inicioJogo = time(NULL) - jogador->tempoJogo;
+
+    *fase_atual = estado.fase_atual;
+
+    // instancia todos os sapos
+    for(i = 0; i< NUM_SAPOS; i++){
+        // se o sapo tem status ativo, altera o indice do sapo
+        if(estado.lista_sapos[i].status == ATIVO){
+            *indice_sapo = i;
+        }
+        lista_sapos[i] = estado.lista_sapos[i];
+    }
+
+    // instancia todos os veiculos
     for(i = 0; i< NUM_VEICULOS; i++){
         lista_veiculos1[i] = estado.lista_veiculos1[i];
         lista_veiculos2[i] = estado.lista_veiculos2[i];
     }
+
+    // desenha o sapo na posicao atual
+    plota_sapo(lista_sapos[*indice_sapo].envelope[0], lista_sapos[*indice_sapo].cor);
+
+    // desenha todos sapos inativos
+    desenha_sapos_inativos(*indice_sapo, WHITE);
+
+    // se o jogador nao salvou nenhum sapo, mostra o header inicial
+    if(jogador->sapos_salvos == 0)
+    {
+        escreve_header();
+    }else
+    {
+        // desenha todos os sapos salvos
+        for(i = 0; i< jogador->sapos_salvos; i++)
+        {
+            coordenada.x = XFIM+2;
+            coordenada.y = YINI+2 + i * 3;
+            plota_sapo(coordenada, BROWN);
+        }
+    }
+
+    // reposiciona os veiculos
+    inicializa_carros(lista_veiculos1, DIR, Y_PISTA1);
+    inicializa_carros(lista_veiculos2, DIR, Y_PISTA2);
 }
