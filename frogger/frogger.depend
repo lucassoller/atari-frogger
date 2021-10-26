@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1635052239 source:c:\codeb\projects\atari-frogger\frogger\arquivos.c
+1635224095 source:c:\codeb\projects\atari-frogger\frogger\arquivos.c
 	<stdio.h>
 	<stdlib.h>
 	"utilities.h"
@@ -10,4 +10,16 @@
 	<conio2.h>
 	<windows.h>
 	<time.h>
+
+1635224401 source:c:\codeb\projects\atari-frogger\frogger\main.c
+	<stdio.h>
+	<stdlib.h>
+	<conio2.h>
+	<windows.h>
+	<time.h>
+	"arquivos.h"
+
+1635224061 c:\codeb\projects\atari-frogger\frogger\arquivos.h
+	<stdio.h>
+	"utilities.h"
 

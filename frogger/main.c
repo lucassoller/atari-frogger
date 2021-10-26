@@ -31,7 +31,7 @@ void testa_carro_unitario(VEICULO *lista_veiculos, int posicao);
 void desenha_veiculo(VEICULO veiculo, COLORS cor);
 void desenha_lista_veiculos(VEICULO *lista_veiculos);
 void apaga_carros(VEICULO *lista_veiculos);
-void pausa_jogo(JOGADOR jogador, SAPO lista_sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual, FILE *arq);
+void pausa_jogo(JOGADOR jogador, SAPO lista_sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual);
 void instancia_jogo(ESTADO estado, JOGADOR *jogador, SAPO *lista_sapos, VEICULO *lista_veiculos1, VEICULO *lista_veiculos2, int *indice_sapo, int *fase_atual);
 void escreve_header();
 
@@ -92,7 +92,6 @@ void inicia_jogo()
     COORDENADA coordenada;
 
     ESTADO estado;
-    FILE *arq = NULL;
 
     // inicializa valores
     inicializa_carros(lista_veiculos1, DIR, Y_PISTA1);
@@ -166,6 +165,7 @@ void inicia_jogo()
                     // se chegou no topo e não acabaram os sapos da lista, redesenha os sapos inativos e reposiciona os veiculos
                     if(chegou_no_topo == 1)
                     {
+                        // mostra a mensagem que o sapo atravessou a rua
                         mostra_mensagem(MSG_ATRAVESSOU_RUA);
                         // desenha o sapo no inicio da tela
                         plota_sapo(lista_sapos[indice_sapo].envelope[0], lista_sapos[indice_sapo].cor);
@@ -187,7 +187,7 @@ void inicia_jogo()
             }else if(tecla == T_PMAX || tecla == T_PMIN)
             {
                 // salva todos as variaveis do jogo
-                pausa_jogo(jogador, lista_sapos, lista_veiculos1, lista_veiculos2, fase_atual, arq);
+                pausa_jogo(jogador, lista_sapos, lista_veiculos1, lista_veiculos2, fase_atual);
                 // mostra mensagem de pause
                 mostra_mensagem(MSG_PAUSE);
                 // recalcula o tempo do jogo
@@ -196,18 +196,19 @@ void inicia_jogo()
             }else if(tecla == T_CMAX || tecla == T_CMIN)
             {
                 // carrega todos os valores do arquivo binario na estrutura ESTADO se encontrou o arquivo
-                if(le_jogo_salvo(&estado, jogador.nome, arq))
+                if(le_jogo_salvo(&estado, jogador.nome) == 0)
                 {
                     // instancia cada valor de ESTADO nas variaveis do jogo
                     instancia_jogo(estado, &jogador, lista_sapos, lista_veiculos1, lista_veiculos2, &indice_sapo, &fase_atual);
                 }else
                 {
+                    // mostra a mensagem que não foi encontrado o arquivo
                     mostra_mensagem(MSG_SEM_ARQUIVO);
                 }
             }
         }
     }
-
+    // enquanto a tecla pressionada não for ESC
     while(tecla != T_ESC);
     textcolor(WHITE);
     // armazena nome do jogador, calcula escore
@@ -216,6 +217,7 @@ void inicia_jogo()
     encerra_jogo(jogador);
 }
 
+// escreve as mensagens de header e sapos salvos
 void escreve_header()
 {
     textcolor(YELLOW);
@@ -287,6 +289,7 @@ void inicializa_carros(VEICULO *lista_veiculos, DIRECAO_MOVIMENTO direcao, int y
     }
 }
 
+// desenha cada veiuclo na tela
 void desenha_veiculo(VEICULO veiculo, COLORS cor)
 {
     int xc1 = veiculo.envelope[0].x, yc1 = veiculo.envelope[0].y;
@@ -493,7 +496,7 @@ void desenha_veiculo(VEICULO veiculo, COLORS cor)
     }
 }
 
-//APAGA VEICULOS DA TELA
+//apaga os veiculos da tela
 void apaga_carros(VEICULO *lista_veiculos)
 {
     int i;
@@ -555,7 +558,7 @@ void testa_carro_unitario(VEICULO *lista_veiculos, int posicao)
     }
 }
 
-
+// desenha a lista de veiculos
 void desenha_lista_veiculos(VEICULO *lista_veiculos)
 {
     int i;
@@ -594,6 +597,7 @@ int move_sapo(SAPO *lista_sapo, int tecla, int *indice_sapo)
         // se for o ultimo encerra o jogo
         if(ultimo_sapo)
         {
+            // mostra mensagem que acabaram as vidas do sapo
             mostra_mensagem(MSG_FIM_VIDAS);
             chegou_no_topo = 2;
         }
@@ -946,6 +950,7 @@ void calcula_score(JOGADOR *jogador)
     // soma a pontuacao do tempo do jogo com a pontuacao de cada sapo salvo
     jogador->score = score + jogador->sapos_salvos * PONTO_SAPO_SALVO;
 
+    // imprime a pontuação do jogador
     printf("\nA sua pontuacao final eh: %d pontos", jogador->score);
 }
 
@@ -961,7 +966,8 @@ void encerra_jogo(JOGADOR jogador)
            "Pontuacao final: %d pontos\n\n", jogador.nome, jogador.sapos_salvos, jogador.tempoJogo, jogador.score);
 }
 
-void pausa_jogo(JOGADOR jogador, SAPO lista_sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual, FILE *arq)
+// salva o estado atual do jogo em um arquivo binario
+void pausa_jogo(JOGADOR jogador, SAPO lista_sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual)
 {
     ESTADO estado;
     int i;
@@ -971,18 +977,22 @@ void pausa_jogo(JOGADOR jogador, SAPO lista_sapos[], VEICULO lista_veiculos1[], 
     estado.jogador = jogador;
     estado.fase_atual = fase_atual;
 
+    // percorre a lista de sapos
     for(i = 0; i< NUM_SAPOS; i++){
         estado.lista_sapos[i] = lista_sapos[i];
     }
 
+    // percorre as listas de veiculos
     for(i = 0; i< NUM_VEICULOS; i++){
         estado.lista_veiculos1[i] = lista_veiculos1[i];
         estado.lista_veiculos2[i] = lista_veiculos2[i];
     }
 
-    salva_estado_jogo(estado, arq);
+    // salvo o estado do jogo
+    salva_estado_jogo(estado);
 }
 
+// instancia todos as variaveis do jogo com os valores do arquivo binario
 void instancia_jogo(ESTADO estado, JOGADOR *jogador, SAPO *lista_sapos, VEICULO *lista_veiculos1, VEICULO *lista_veiculos2, int *indice_sapo, int *fase_atual)
 {
     int i;
