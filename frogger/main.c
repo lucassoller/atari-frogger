@@ -34,6 +34,11 @@ void apaga_carros(VEICULO *lista_veiculos);
 void pausa_jogo(JOGADOR jogador, SAPO lista_sapos[], VEICULO lista_veiculos1[], VEICULO lista_veiculos2[], int fase_atual);
 void instancia_jogo(ESTADO estado, JOGADOR *jogador, SAPO *lista_sapos, VEICULO *lista_veiculos1, VEICULO *lista_veiculos2, int *indice_sapo, int *fase_atual);
 void escreve_header();
+void ordena_lista_jogadores(JOGADOR jog, JOGADOR *lista_jogadores, int tam);
+void insere_jogador(JOGADOR jog, JOGADOR *lista_jogadores, int *tam);
+void mostra_lista_jogadores(JOGADOR *lista_jogadores, JOGADOR jogador_atual, int tam);
+int calcula_score_auxiliar(JOGADOR jogador);
+void escreve_info_jogador(JOGADOR jogador);
 
 // funcao principal
 int main()
@@ -114,6 +119,7 @@ void inicia_jogo()
         // desenha as listas de veiculos no jogo
         desenha_lista_veiculos(lista_veiculos1);
         desenha_lista_veiculos(lista_veiculos2);
+        escreve_info_jogador(jogador);
 
         // testa a colisao entre o sapo e todos os carros da lista1
         colide = mata_sapo(lista_sapos, lista_veiculos1, &indice_sapo);
@@ -122,7 +128,6 @@ void inicia_jogo()
         if(colide == 0){
             colide = mata_sapo(lista_sapos, lista_veiculos2, &indice_sapo);
         }
-
         // se colidiu e nao acabaram os sapos da lista, redesenha os sapos inativos e reposiciona os carros
         if(colide == 1)
         {
@@ -162,6 +167,7 @@ void inicia_jogo()
                     plota_sapo(coordenada, BROWN);
                     // acrescenta 1 sapo salvo para o jogador
                     jogador.sapos_salvos++;
+                    jogador.sapos_espera--;
                     // se chegou no topo e não acabaram os sapos da lista, redesenha os sapos inativos e reposiciona os veiculos
                     if(chegou_no_topo == 1)
                     {
@@ -210,6 +216,7 @@ void inicia_jogo()
     }
     // enquanto a tecla pressionada não for ESC
     while(tecla != T_ESC);
+
     textcolor(WHITE);
     // armazena nome do jogador, calcula escore
     calcula_score(&jogador);
@@ -915,6 +922,7 @@ void inicializa_jogador(JOGADOR *jogador)
     gets(jogador->nome);
 
     jogador->sapos_salvos = 0;
+    jogador->sapos_espera = NUM_SAPOS - 1;
     // pega horario atual do clock
     jogador->inicioJogo = time(NULL);
     jogador->tempoJogo = 0;
@@ -954,11 +962,61 @@ void calcula_score(JOGADOR *jogador)
     printf("\nA sua pontuacao final eh: %d pontos", jogador->score);
 }
 
+//CALCULA E RETORNA INTEIRO DA PONTUACAO DE DETERMINADO JOGADOR
+int calcula_score_auxiliar(JOGADOR jogador)
+{
+    // O JOGADOR POSSUI 2 FORMAS DE PONTUAR
+    // 1 - SE TERMINOU O JOGO MORRENDO OU SALVANDO TODOS SAPOS, SUBTRAI O TEMPO QUE LEVOU PARA TERMINAR O JOGO
+    // DO TEMPO MAXIMO DO JOGO. SE ULTRAPASSOU O TEMPO MAXIMO, NÃO PONTUA
+    // 2 - SE SALVOU ALGUM SAPO. CADA SAPO SALVO ADICIONA UM VALOR CONSTANTE AO SOMATORIO DA PONTUACAO
+    // AO FINAL SOMA-SE A PONTUACAO 1 E PONTUACAO
+    int score = 0;
+
+    if(jogador.tempoJogo < TEMPO_MAXIMO)
+    {
+        // subtrai o tempo que levou para concluir o jogo do tempo maximo
+        score = TEMPO_MAXIMO - jogador.tempoJogo;
+    }
+
+    // soma a pontuacao do tempo do jogo com a pontuacao de cada sapo salvo
+    return (score + jogador.sapos_salvos * PONTO_SAPO_SALVO);
+}
+
 // mostra mensagem final pro jogador
 void encerra_jogo(JOGADOR jogador)
 {
     // limpa a tela
+    FILE* arq;
+    int retorno, tamanho;
+    JOGADOR lista_jogadores[NUMERO_MAXIMO_RANKING+1];
+
     clrscr();
+    //abre arquivo do ranking
+    retorno = abre_arq_jog(&arq);
+    if(retorno ==0){
+      //caso ocorra erro apresenta mensagem
+      printf("\nErro ao abrir ranking de jogadores\n\n");
+    }else{
+
+      //le arquivo do ranking e atribui retorno, o número de jogadores, a variavel de tamanho
+      tamanho = le_arq_texto(arq, lista_jogadores);
+      //exibe ranking final
+      mostra_lista_jogadores(lista_jogadores, jogador, tamanho);
+      //insere jogador atual na lista
+      insere_jogador(jogador, lista_jogadores, &tamanho);
+      //ordena jodores
+      ordena_lista_jogadores(jogador, lista_jogadores, tamanho);
+      //salva novo arquivo
+      retorno = salva_lista_jogadores(arq, lista_jogadores, tamanho);
+
+      if(retorno==0){
+          //caso nao seja possivel salvar exibe mensagem
+        printf("\nNão foi possível salvar sua pontuação\n\n");
+      }
+    }
+
+    printf("\nRESUMO DO SEU JOGO:\n");
+
 
     printf("Nome: %s\n"
            "Sapos salvos: %d\n"
@@ -1061,4 +1119,118 @@ void instancia_jogo(ESTADO estado, JOGADOR *jogador, SAPO *lista_sapos, VEICULO 
     // reposiciona os veiculos
     inicializa_carros(lista_veiculos1, DIR, Y_PISTA1);
     inicializa_carros(lista_veiculos2, DIR, Y_PISTA2);
+}
+
+// ESCREVE INFO DO JOGADOR NA TELA
+void escreve_info_jogador(JOGADOR jogador)
+{
+    char aux[15];
+    //CALCULA SEGUNDOS DE JOGO POR MEIO DA DIFERENCA DE TEMPO ENTRE INICIO E MOMENTO ATUAL
+    int tempo = (int) difftime(time(NULL), jogador.inicioJogo);
+    jogador.tempoJogo = tempo;
+    //CALCULA SCORE ATUAL POR MEIO DE FUNCAO AUXILIAR
+    jogador.score = calcula_score_auxiliar(jogador);
+    textcolor(WHITE);
+    cputsxy(XFIM+20, YINI, "Suas informacoes:");
+    cputsxy(XFIM+20, YINI+2, "Nome: ");
+    cputsxy(XFIM+20, YINI+5, "Pontos: ");
+    cputsxy(XFIM+20, YINI+8, "Tempo de jogo: ");
+    textcolor(YELLOW);
+    cputsxy(XFIM+20, YINI+3, jogador.nome);
+    sprintf(aux, "%d",jogador.score);
+    cputsxy(XFIM+20, YINI+6, aux);
+    sprintf(aux, "%ds", tempo);
+    cputsxy(XFIM+20, YINI+9, aux);
+}
+
+void ordena_lista_jogadores(JOGADOR jog, JOGADOR *lista_jogadores, int tam)
+{
+    int i, j;
+    JOGADOR temp;
+    //REALIZA UM BUBBLE SORT PARA ORDENAR DE MANEIRA DECRESCENTE
+    for (i = 1; i < tam; i++)
+    {
+        for (j = 0; j < i; j++)
+        {
+            //CASO JOGADOR DO INDICE I TTENHA SCORE SUPERIOR A DO INDICE J
+            if (lista_jogadores[i].score > lista_jogadores[j].score)
+            {
+              //TROCA POSICOES DE AMBOS POR MEIO DE VARIAVEL AUXILIAR, ANALOGO A SWAP
+                temp = lista_jogadores[i];
+                lista_jogadores[i] = lista_jogadores[j];
+                lista_jogadores[j] = temp;
+            }
+        }
+    }
+}
+
+void insere_jogador(JOGADOR jog, JOGADOR *lista_jogadores, int *tam)
+{
+    int i, pos = -1;
+    for(i = 0; i<*tam; i++)
+    {
+        if(strcmp(lista_jogadores[i].nome, jog.nome)==0)
+        {
+          //CASO OS NOMES SEJAM IGUAIS E A PONTUACAO O VALOR DE I E ATRIBUIDO A POS
+            pos = i;
+        }
+    }
+    if(pos!=-1)
+    {
+      //CASO A POSICAO SEJA DIFERENTE DE -1, OS NOMES COINCIDEM NA POSICAO POS
+      //PORTANTO O JOGADOR DA LISTA E SOBRESCRITO SE POSSUIR UMA PONTUACAO MENOR QUE O JOGADOR ATUAL
+      if(jog.score>=lista_jogadores[pos].score){
+          lista_jogadores[pos] = jog;
+      }
+
+    }
+    else
+    {
+      //CASO CONTRARIO O JOGADOR E POSTO NO FINAL DO ARRAY
+
+        lista_jogadores[*tam] = jog;
+
+        //E O TAMANHO DO ARRAY E INCREMENTADO
+        *tam=*tam+1;
+
+    }
+}
+
+void mostra_lista_jogadores(JOGADOR *lista_jogadores, JOGADOR jogador_atual, int tam)
+{
+    //cria lista somente para exibicao, nao sera salva
+    JOGADOR lista_jogadores_exibicao[NUMERO_MAXIMO_RANKING+1];
+    int i, pos =-1;
+
+    for(i = 0; i<tam; i++)
+    {
+        if(strcmp(lista_jogadores[i].nome, jogador_atual.nome)==0)
+        {
+          //caso os nomes sejam os mesmos guarda indice
+          pos=i;
+        }else{
+          //caso contrario, copia jogador para lista de exibicao
+          lista_jogadores_exibicao[i] = lista_jogadores[i];
+        }
+    }
+    if(pos!=-1){
+        //se o jogador tiver uma pontuacao no ranking
+        //exibe a mais recente, contudo nao salva
+        //(a salva e a mais alta sempre)
+       lista_jogadores_exibicao[pos] = jogador_atual;
+       sprintf(lista_jogadores_exibicao[pos].nome, "%s (score + recente)", jogador_atual.nome);
+    }else{
+
+      //atibui jogador pro finl da lista e incrementa auxiliar de tamanho
+      lista_jogadores_exibicao[tam++] = jogador_atual;
+    }
+    //ordena lista de exibicao
+    ordena_lista_jogadores(jogador_atual, lista_jogadores_exibicao, tam);
+    //exibe ranking
+    printf("RANKING DE JOGADORES:\n");
+    for(i = 0; i < tam && i <= NUMERO_MAXIMO_RANKING; i++)
+    {
+      //IMPRIME O NOME E O SCORE DOS JOGADORES DA LISTA
+        printf("%d - %-25s : %d PONTOS\n", i+1, lista_jogadores_exibicao[i].nome, lista_jogadores_exibicao[i].score);
+    }
 }

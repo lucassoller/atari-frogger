@@ -16,6 +16,9 @@
 // pontuação de cada sapo salvo
 #define PONTO_SAPO_SALVO 50
 
+#define FROGGERJOG "FROGGERJog.txt"
+#define NUMERO_MAXIMO_RANKING 5
+
 // tempo maximo de jogo para pontuar
 #define TEMPO_MAXIMO 80
 
@@ -55,7 +58,7 @@
 
 // tamanho máximo do nome do jogador
 #define TAM 20
-
+#define TAM_MAX 256
 
 typedef enum
 {
@@ -118,6 +121,7 @@ typedef struct
 {
     char nome[TAM];
     int sapos_salvos;
+    int sapos_espera;
     time_t inicioJogo;
     int tempoJogo;
     int score;
