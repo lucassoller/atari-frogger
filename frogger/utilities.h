@@ -6,18 +6,22 @@
 
 // coordenadas da moldura do jogo
 #define XINI 1
-#define XFIM 79
+#define XFIM 104
 #define YINI 2
-#define YFIM 23
+#define YFIM 25
+
+#define XDISP 102
 
 // coordenada da mensagem do jogo
-#define YMENSAGEM 28
+#define YMENSAGEM 29
+#define X_TEXTO_CRON 13
+#define X_CRON 8
 
 // pontuação de cada sapo salvo
 #define PONTO_SAPO_SALVO 50
 
 #define FROGGERJOG "FROGGERJog.txt"
-#define NUMERO_MAXIMO_RANKING 5
+#define NUMERO_MAXIMO_RANKING 10
 
 // tempo maximo de jogo para pontuar
 #define TEMPO_MAXIMO 80
@@ -33,26 +37,40 @@
 #define ESPACO_SAPO_INATIVO 10
 
 // coordenadas iniciais do sapo
-#define X1_SAPO 36
-#define Y1_SAPO 21
-#define X2_SAPO 43
-#define Y2_SAPO 22
+#define X1_SAPO 48
+#define Y1_SAPO 23
+#define X2_SAPO 55
+#define Y2_SAPO 24
 
 // número de sapos
 #define NUM_SAPOS 6
+#define NUM_SAPOS_F2 8
 
 #define Y1_CARRO 11
 
 // número de veiculos em cada pista
-#define NUM_VEICULOS 5
+#define NUM_VEICULOS 6
+#define NUM_VEICULOS_F2 7
 
-// distancias minimas e maximas entre cada carro das pistas
-#define DISTANCIA_MAXIMA 15
-#define DISTANCIA_MINIMA 5
+// distancias minimas e maximas entre cada veiculo das pistas
+#define DISTANCIA_MAXIMA_F1 20
+#define DISTANCIA_MINIMA_F1 10
+#define DISTANCIA_MAXIMA_F2 15
+#define DISTANCIA_MINIMA_F2 10
+
+// velocidades minimas e maximas das pistas
+#define VELOCIDADE_MIN_F1 1
+#define VELOCIDADE_MAX_F1 2
+#define VELOCIDADE_MIN_F2 2
+#define VELOCIDADE_MAX_F2 3
 
 // coordenadas das duas pistas
-#define Y_PISTA1 6
-#define Y_PISTA2 13
+#define Y_PISTA1 5
+#define Y_PISTA2 9
+#define Y_PISTA3 15
+#define Y_PISTA4 19
+
+#define NUM_PISTAS 4
 
 #define SIZE 100
 
@@ -68,7 +86,9 @@ typedef enum
     MSG_FIM_TEMPO = 3,
     MSG_PAUSE = 4,
     MSG_SEM_ARQUIVO = 5,
-    MSG_LER_ARQUIVO = 6
+    MSG_LER_ARQUIVO = 6,
+    MSG_INICIO = 7,
+    MSG_FASE_2 = 8
 } MENSAGEM;
 
 typedef enum
@@ -121,9 +141,11 @@ typedef struct
 {
     char nome[TAM];
     int sapos_salvos;
+    int sapos_salvos_f1;
     int sapos_espera;
     time_t inicioJogo;
     int tempoJogo;
+    int tempoJogo_f1
     int score;
 } JOGADOR;
 
@@ -141,13 +163,24 @@ typedef struct
     COORDENADA envelope[2];
     int tamanhoEmX;
     int tamanhoEmY;
-    TIPO_VEICULO tipo;
     int distancia;
-    DIRECAO_MOVIMENTO dir;
-    int pista;
     int valido;
-    int fase;
+    int velocidade;
+    TIPO_VEICULO tipo;
+    DIRECAO_MOVIMENTO dir;
+    COLORS cor;
 } VEICULO;
+
+typedef struct
+{
+    int fase;
+    int num_sapos;
+    int velocidade_min;
+    int velocidade_max;
+    int distancia_min;
+    int distancia_max;
+    COLORS cor_sapo;
+} FASE;
 
 typedef struct
 {
@@ -155,5 +188,6 @@ typedef struct
     SAPO lista_sapos[NUM_SAPOS];
     VEICULO lista_veiculos1[NUM_VEICULOS];
     VEICULO lista_veiculos2[NUM_VEICULOS];
-    int fase_atual;
+    FASE fase;
+
 } ESTADO;

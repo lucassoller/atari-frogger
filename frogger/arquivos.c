@@ -1,13 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "utilities.h"
 
 // salva o estado do jogo em um arquivo binario
 int salva_estado_jogo(ESTADO estado)
 {
     FILE *arq = NULL;
+    char nome_aquivo[TAM];
+    strcpy(nome_aquivo, estado.jogador.nome);
+    strcat(nome_aquivo, ".bin");
+
     // abre o arquivo
-    if((arq = fopen(estado.jogador.nome, "wb")))
+    if((arq = fopen(nome_aquivo, "wb")))
     {
         // escreve no arquivo
         fwrite(&estado, sizeof(ESTADO), 1, arq);
@@ -21,11 +26,15 @@ int salva_estado_jogo(ESTADO estado)
 }
 
 // le os dados do arquivo binario
-int le_jogo_salvo(ESTADO *estado, char nome_usuario[TAM])
+int le_jogo_salvo(ESTADO *estado, char nome_usuario[])
 {
     FILE *arq = NULL;
+    char nome_aquivo[TAM];
+    strcpy(nome_aquivo, nome_usuario);
+    strcat(nome_aquivo, ".bin");
+
     // abre o arquivo
-    if((arq = fopen(nome_usuario, "rb")))
+    if((arq = fopen(nome_aquivo, "rb")))
     {
         // enquanto nao chega no fim do arquivo
         while(feof(arq)== 0)
@@ -100,10 +109,10 @@ int salva_lista_jogadores(FILE *arq, JOGADOR *lista_jogadores, int tam)
     //VOLTA PONTEIRO PARA INICIO DO ARQUIVO
     rewind(arq);
 
-    for(i = 0; i< tam && i<5; i++)
+    for(i = 0; i< tam && i<NUMERO_MAXIMO_RANKING; i++)
     {
         //CRIA STRING NO FORMATO SALVO NO ARQUIVO, CONTUDO ADICIONA ESPACOS PARA TER CERTEZA QUE VAI SOBREESCREVER TODA LINHA
-        sprintf(aux, "%s #%d #%d #%d #%d                                  \n\0",lista_jogadores[i].nome, lista_jogadores[i].sapos_espera, lista_jogadores[i].sapos_salvos, lista_jogadores[i].tempoJogo, lista_jogadores[i].score);
+        sprintf(aux, "%s #%d #%d #%d #%d                                  \n\0",lista_jogadores[i].nome, lista_jogadores[i].sapos_espera, lista_jogadores[i].sapos_salvos+lista_jogadores[i].sapos_salvos_f1, lista_jogadores[i].tempoJogo+lista_jogadores[i].tempoJogo_f1, lista_jogadores[i].score);
         fputs(aux, arq);//ADICIONA LINHA NO FILE
     }
     fclose(arq);//FECHA ARQUIVO
