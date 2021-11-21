@@ -51,6 +51,7 @@ int le_jogo_salvo(ESTADO *estado, char nome_usuario[])
     return 1;
 }
 
+// abre o arquivo de texto
 int abre_arq_jog(FILE **arqtxt)
 {
     //ABRE O ARQUIVO PARA LEITURA E ESCRITA
@@ -71,6 +72,7 @@ int abre_arq_jog(FILE **arqtxt)
     return 1;
 }
 
+// le o arquivo de texto
 int le_arq_texto(FILE *arqtxt, JOGADOR *lista_jogadores)
 {
     char string[TAM_MAX];
@@ -101,6 +103,7 @@ int le_arq_texto(FILE *arqtxt, JOGADOR *lista_jogadores)
     return i;
 }
 
+// salva o jogador no arquivo de texto
 int salva_lista_jogadores(FILE *arq, JOGADOR *lista_jogadores, int tam)
 {
     int i = 0;
@@ -112,7 +115,7 @@ int salva_lista_jogadores(FILE *arq, JOGADOR *lista_jogadores, int tam)
     for(i = 0; i< tam && i<NUMERO_MAXIMO_RANKING; i++)
     {
         //CRIA STRING NO FORMATO SALVO NO ARQUIVO, CONTUDO ADICIONA ESPACOS PARA TER CERTEZA QUE VAI SOBREESCREVER TODA LINHA
-        sprintf(aux, "%s #%d #%d #%d #%d                                  \n\0",lista_jogadores[i].nome, lista_jogadores[i].sapos_espera, lista_jogadores[i].sapos_salvos+lista_jogadores[i].sapos_salvos_f1, lista_jogadores[i].tempoJogo+lista_jogadores[i].tempoJogo_f1, lista_jogadores[i].score);
+        sprintf(aux, "%s #%d #%d #%d #%d                                  \n",lista_jogadores[i].nome, lista_jogadores[i].sapos_espera, lista_jogadores[i].sapos_salvos+lista_jogadores[i].sapos_salvos_f1, lista_jogadores[i].tempoJogo+lista_jogadores[i].tempoJogo_f1, lista_jogadores[i].score);
         fputs(aux, arq);//ADICIONA LINHA NO FILE
     }
     fclose(arq);//FECHA ARQUIVO

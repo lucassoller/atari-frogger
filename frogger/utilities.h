@@ -20,7 +20,9 @@
 // pontuação de cada sapo salvo
 #define PONTO_SAPO_SALVO 50
 
+// nome do arquivo de texto
 #define FROGGERJOG "FROGGERJog.txt"
+// número de jogadores permitido no arquivo de texto
 #define NUMERO_MAXIMO_RANKING 10
 
 // tempo maximo de jogo para pontuar
@@ -48,21 +50,22 @@
 
 #define Y1_CARRO 11
 
+//tempo padrao entre iteracoes do fluxo principal
+#define ESPERA_PRINCIPAL 10
+
 // número de veiculos em cada pista
-#define NUM_VEICULOS 6
-#define NUM_VEICULOS_F2 7
+#define NUM_VEICULOS 4
+
+// número de pistas no jogo
+#define NUM_PISTAS 4
 
 // distancias minimas e maximas entre cada veiculo das pistas
 #define DISTANCIA_MAXIMA_F1 20
 #define DISTANCIA_MINIMA_F1 10
-#define DISTANCIA_MAXIMA_F2 15
-#define DISTANCIA_MINIMA_F2 10
 
 // velocidades minimas e maximas das pistas
 #define VELOCIDADE_MIN_F1 1
 #define VELOCIDADE_MAX_F1 2
-#define VELOCIDADE_MIN_F2 2
-#define VELOCIDADE_MAX_F2 3
 
 // coordenadas das duas pistas
 #define Y_PISTA1 5
@@ -70,8 +73,8 @@
 #define Y_PISTA3 15
 #define Y_PISTA4 19
 
+// número de pistas
 #define NUM_PISTAS 4
-
 #define SIZE 100
 
 // tamanho máximo do nome do jogador
@@ -105,7 +108,9 @@ typedef enum
     T_PMAX = 80,
     T_PMIN = 112,
     T_RMAX = 82,
-    T_RMIN = 114
+    T_RMIN = 114,
+    T_JMAX = 74,
+    T_JMIN = 106
 } TECLAS;
 
 typedef enum
@@ -131,6 +136,15 @@ typedef enum
     ONIBUS = 2
 } TIPO_VEICULO;
 
+
+typedef enum
+{
+    TAM_ESPORTE = 3,
+    TAM_SEDAN = 5,
+    TAM_ONIBUS = 7
+} TAMANHO_VEICULO_X;
+
+
 typedef struct
 {
     int x;
@@ -145,7 +159,7 @@ typedef struct
     int sapos_espera;
     time_t inicioJogo;
     int tempoJogo;
-    int tempoJogo_f1
+    int tempoJogo_f1;
     int score;
 } JOGADOR;
 
@@ -154,8 +168,6 @@ typedef struct
     COORDENADA envelope[2];
     STATUS_SAPO status;
     COLORS cor;
-    int fase;
-
 } SAPO;
 
 typedef struct
@@ -173,14 +185,17 @@ typedef struct
 
 typedef struct
 {
+    DIRECAO_MOVIMENTO dir;
+    int velocidade;
+} PISTA;
+
+typedef struct
+{
     int fase;
     int num_sapos;
-    int velocidade_min;
-    int velocidade_max;
-    int distancia_min;
-    int distancia_max;
     COLORS cor_sapo;
 } FASE;
+
 
 typedef struct
 {
@@ -188,6 +203,7 @@ typedef struct
     SAPO lista_sapos[NUM_SAPOS];
     VEICULO lista_veiculos1[NUM_VEICULOS];
     VEICULO lista_veiculos2[NUM_VEICULOS];
+    VEICULO lista_veiculos3[NUM_VEICULOS];
+    VEICULO lista_veiculos4[NUM_VEICULOS];
     FASE fase;
-
 } ESTADO;

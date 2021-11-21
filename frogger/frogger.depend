@@ -1,18 +1,18 @@
 # depslib dependency file v1.0
-1637196895 source:c:\codeb\projects\atari-frogger\frogger\arquivos.c
+1637531692 source:c:\codeb\projects\atari-frogger\frogger\arquivos.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	"utilities.h"
 
-1637197934 c:\codeb\projects\atari-frogger\frogger\utilities.h
+1637534043 c:\codeb\projects\atari-frogger\frogger\utilities.h
 	<stdio.h>
 	<stdlib.h>
 	<conio2.h>
 	<windows.h>
 	<time.h>
 
-1637197677 source:c:\codeb\projects\atari-frogger\frogger\main.c
+1637536155 source:c:\codeb\projects\atari-frogger\frogger\main.c
 	<stdio.h>
 	<stdlib.h>
 	<conio2.h>
@@ -20,7 +20,32 @@
 	<time.h>
 	"arquivos.h"
 
-1637128175 c:\codeb\projects\atari-frogger\frogger\arquivos.h
+1637474910 c:\codeb\projects\atari-frogger\frogger\arquivos.h
+	<stdio.h>
+	"utilities.h"
+
+1637468328 source:c:\users\dovah\videos\atari-frogger-master\atari-frogger-master\frogger\arquivos.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"utilities.h"
+
+1637468259 c:\users\dovah\videos\atari-frogger-master\atari-frogger-master\frogger\utilities.h
+	<stdio.h>
+	<stdlib.h>
+	<conio2.h>
+	<windows.h>
+	<time.h>
+
+1637468257 source:c:\users\dovah\videos\atari-frogger-master\atari-frogger-master\frogger\main.c
+	<stdio.h>
+	<stdlib.h>
+	<conio2.h>
+	<windows.h>
+	<time.h>
+	"arquivos.h"
+
+1637441998 c:\users\dovah\videos\atari-frogger-master\atari-frogger-master\frogger\arquivos.h
 	<stdio.h>
 	"utilities.h"
 
